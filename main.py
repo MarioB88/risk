@@ -1,30 +1,44 @@
 import networkx as nx 
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import random as r
-import threading
-import time
+import tkinter as tk
 from nodes import Node
 from player import Player
 
-def draw_graph(player1, player2, update=False):
+max_territorios = 18
+
+def draw_graph(player1, player2, total_map):
     global riskMap
-    
     # El grafo representa el continente de África en esta foto: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Risk_Game_Map_2004_Edition.png"
+
+    player1_nodes = list(player1.get_nodesHolded().keys())
+    player2_nodes = list(player2.get_nodesHolded().keys())
+    total_nodes = list(total_map.keys())
+    aux = list(set(player1_nodes) | set(player2_nodes))
+    noplayer_nodes = list(set(aux) ^ set(total_nodes))
     
-    riskMap.add_nodes_from(range(1,7))
-    riskMap.add_edges_from([(5,3), (5,2), (5,1), (3,2), (2,1), (2,6), (2,4), (6,1), (6,4)])
+    root = tk.Tk()
+    root.wm_title("Risk (continente África en forma de grafo)")
+    root.wm_protocol('WM_DELETE_WINDOW', root.destroy)
+
+    f = plt.figure(figsize=(5,4))
+    plt.axis('off')
 
     pos = nx.spring_layout(riskMap)
 
-    nx.draw_networkx_nodes(riskMap, pos, nodelist= player1.get_nodesHolded().keys(), node_color="r", alpha = 0.8)
-    nx.draw_networkx_nodes(riskMap, pos, nodelist= player2.get_nodesHolded().keys(), node_color="y", alpha = 0.8)
+    nx.draw_networkx_nodes(riskMap, pos, nodelist= player1_nodes, node_color="r", alpha = 0.8)
+    nx.draw_networkx_nodes(riskMap, pos, nodelist= player2_nodes, node_color="y", alpha = 0.8)
+    nx.draw_networkx_nodes(riskMap, pos, nodelist= noplayer_nodes, node_color="b", alpha = 0.8)
     nx.draw_networkx_edges(riskMap, pos)
     nx.draw_networkx_labels(riskMap, pos)
 
-    if update:
-        plt.draw()
-    else:
-        plt.show()
+    canvas = FigureCanvasTkAgg(f, master=root)
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+    tk.Button(root, text="Next turn", command = lambda:[root.withdraw(), root.quit()]).pack()
+    tk.mainloop()
 
 
 def set_neighbours(riskMap, total_map):
@@ -34,72 +48,51 @@ def set_neighbours(riskMap, total_map):
         total_map.get(e).add_neighbour(total_map.get(n))
 
 
-def set_soldiers(player1, player2):
+def initialize():
+    global riskMap
+    global total_map
+    riskMap=nx.Graph()
+    riskMap.add_nodes_from(range(1, max_territorios))
+    riskMap.add_edges_from([(5,3), (5,2), (5,1), (3,2), (2,1), (2,6), (2,4), (6,1), (6,4), (5,8), (7,8), (7,9), (8,9), (8,10), (9,10), (5,17), (5,15), (3,15), (17,11), (17,13), (17,15), (13,16), (13,14), (13,15), (13,11), (15,16), (16,14), (11,12), (11,14), (12,14)])
+    total_map={}
+    
+    player1 = Player(1, {}, 10)
+    player2 = Player(2, {}, 10)
 
-    while player1.get_nsoldiers() != 0:
-        player1.get_randomNode().add_soldiers(1)
-        player2.get_randomNode().add_soldiers(1)
-        player1.substractn_soldiers(1)
-        player2.substractn_soldiers(1)
+    for i in range(1, max_territorios):
+        node = Node(i, None, 0, [])
+        total_map.setdefault(i, node)
+    set_neighbours(riskMap, total_map)
 
+    for n in total_map.values():
+        n.create_heuristica()
+
+    while(player1.get_nsoldiers() > 0) or (player2.get_nsoldiers() > 0):
+        player1.inicializar_sold_terr(total_map)                            
+        player2.inicializar_sold_terr(total_map)
+        print(player1.get_nsoldiers())
+        print(player2.get_nsoldiers())
+
+    
+    draw_graph(player1, player2, total_map)
+
+    return player1, player2
 
 if __name__ == '__main__':
 
-    global riskMap
-    riskMap=nx.Graph()
-
-    counterOnes = 0
-    counterTwos = 0
-    nodesPlayer1 = {}
-    nodesPlayer2={}
-    total_map={}
-
-    for i in range (1,7):
-        numRand = r.randint(1,2)
-        if numRand == 1:
-            counterOnes += 1
-        else:
-            counterTwos += 1
-        
-        if counterOnes > 3:
-            node = Node(i, 2, 0, [])
-            nodesPlayer2.setdefault(i, node)
-            total_map.setdefault(i, node)
-            continue
-
-        elif counterTwos > 3:
-            node = Node(i, 1, 0, [])
-            nodesPlayer1.setdefault(i, node)
-            total_map.setdefault(i, node)
-            continue
-
-        else:
-            node = Node(i, numRand, 0, [])
-            total_map.setdefault(i, node)
-            if numRand == 1:
-                nodesPlayer1.setdefault(i, node)
-            else:
-                nodesPlayer2.setdefault(i, node)
-            continue
-
-    player1 = Player(1, nodesPlayer1, 10)
-    player2 = Player(2, nodesPlayer2, 10)
-
-    draw_graph(player1, player2)
-    set_neighbours(riskMap, total_map)
-
-    set_soldiers(player1, player2)
+    global total_map
+    player1, player2 = initialize()
 
     binary = True      # Esta variable llevará de qué jugador es el turno, si es 0 sera del primero y si es uno del segundo.
 
     while (len(player1.get_nodesHolded()) != 0)  and (len(player2.get_nodesHolded()) != 0):
         if binary == True:
             player1.set_nsoldiers(len(player1.get_nodesHolded()))
-            player1.player_turn(player2, riskMap)
+            player1.player_turn(player2, total_map)
             binary = False
         else:
             player2.set_nsoldiers(len(player2.get_nodesHolded()))
-            player2.player_turn(player1, riskMap)
+            player2.player_turn(player1, total_map)
             binary = True
         
-        draw_graph(player1, player2)
+        draw_graph(player1, player2, total_map)
