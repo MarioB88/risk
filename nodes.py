@@ -78,7 +78,5 @@ class Node:
         else:
             self._heuristica = 0
 
-        print(str(self.get_idN()) + ", " + str(self._heuristica) + ", " + str(nsoldados))
-
 
         ############## SIEMPRE DA 0 PORQUE LA HEURISTICA INICIAL SIEMPRE ESTA A 0 POR LO QUE LA SUMA DE TODAS LAS HEURISTICAS DE TUS TERRITORIOS SIEMPRE VA A SER 0 #################

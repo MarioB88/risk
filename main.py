@@ -7,6 +7,9 @@ from nodes import Node
 from player import Player
 
 max_territorios = 18
+europa = [11,12,13,14,15,16,17]
+africa = [1,2,3,4,5,6]
+sudamerica = [7,8,9,10]
 
 def draw_graph(player1, player2, total_map):
     global riskMap
@@ -51,18 +54,28 @@ def set_neighbours(riskMap, total_map):
 def initialize():
     global riskMap
     global total_map
+    global europa
+    global africa
+    global sudamerica
+    global list_cont
+
+    list_cont = []
+    list_cont.append(europa)
+    list_cont.append(africa)
+    list_cont.append(sudamerica)
+
     riskMap=nx.Graph()
     riskMap.add_nodes_from(range(1, max_territorios))
     riskMap.add_edges_from([(5,3), (5,2), (5,1), (3,2), (2,1), (2,6), (2,4), (6,1), (6,4), (5,8), (7,8), (7,9), (8,9), (8,10), (9,10), (5,17), (5,15), (3,15), (17,11), (17,13), (17,15), (13,16), (13,14), (13,15), (13,11), (15,16), (16,14), (11,12), (11,14), (12,14)])
     total_map={}
-    
-    player1 = Player(1, {}, 10)
-    player2 = Player(2, {}, 10)
 
     for i in range(1, max_territorios):
         node = Node(i, None, 0, [])
         total_map.setdefault(i, node)
     set_neighbours(riskMap, total_map)
+
+    player1 = Player(1, {}, 10)
+    player2 = Player(2, {}, 10)
 
     for n in total_map.values():
         n.create_heuristica()
@@ -81,18 +94,31 @@ def initialize():
 if __name__ == '__main__':
 
     global total_map
+    global riskMap
+    global list_cont
+
     player1, player2 = initialize()
 
     binary = True      # Esta variable llevará de qué jugador es el turno, si es 0 sera del primero y si es uno del segundo.
 
     while (len(player1.get_nodesHolded()) != 0)  and (len(player2.get_nodesHolded()) != 0):
+        num_cont = 0
+        sold_nuevos = 0
         if binary == True:
-            player1.set_nsoldiers(len(player1.get_nodesHolded()))
+            num_count = player1.continentes(list_cont)
+            sold_nuevos = 10 + (5*num_count)
+            print("Se añaden " + str(sold_nuevos) + " soldados nuevos.")
+            player1.addn_soldiers(sold_nuevos)
             player1.player_turn(player2, total_map)
+            player1.reordenacion(riskMap)
             binary = False
         else:
-            player2.set_nsoldiers(len(player2.get_nodesHolded()))
+            num_count = player2.continentes(list_cont)
+            sold_nuevos = 10 + (5*num_count)
+            print("Se añaden " + str(sold_nuevos) + " soldados nuevos.")
+            player2.addn_soldiers(sold_nuevos)
             player2.player_turn(player1, total_map)
+            player2.reordenacion(riskMap)
             binary = True
         
         draw_graph(player1, player2, total_map)

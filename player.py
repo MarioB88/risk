@@ -1,5 +1,6 @@
 import random as r
 import operator
+import networkx as nx
 from nodes import Node
 
 class Player:
@@ -19,6 +20,9 @@ class Player:
     def set_nsoldiers(self, nsoldiers):
         self._nsoldiers = nsoldiers
 
+    def set_riskMap(self, riskMap):
+        self._riskMap = riskMap
+
     #DEFINIMOS GETTERS
 
     def get_num(self):
@@ -29,6 +33,9 @@ class Player:
     
     def get_nsoldiers(self):
         return self._nsoldiers
+
+    def get_riskMap(self):
+        return self._riskMap
 
     # Funciones para hacer más sencilla la lectura de código
 
@@ -60,12 +67,10 @@ class Player:
 
     def player_turn(self, p_other, total_map):                                                                      # Primero atacar el arbol
 
-        while self.get_nsoldiers() > 0:
-            self.put_soldiers_in_territory(total_map)
+        self.put_soldiers_in_territory(total_map)
 
         for v in self._nodesHolded.values():
             v.create_heuristica()
-            print(v._heuristica)
         
         territorios = list(self.get_nodesHolded().values())
         aux = territorios.copy()
@@ -125,7 +130,7 @@ class Player:
                 attack.set_soldiers(attack.get_soldiers()-target.get_soldiers())
             else:
                 attack.set_soldiers(1)
-            print("Fallo en el ataque desde nodo: " + str(attack.get_idN()) + ", todos tus soldados han caído en combate excepto uno\n")
+            print("Fallo en el ataque desde nodo: " + str(attack.get_idN()) + ", tus soldados han caido en combate\n")
 
     def put_soldiers_in_territory(self, total_map):                                        
 
@@ -134,23 +139,39 @@ class Player:
         ids = list(self.get_nodesHolded().keys())
         heuristicas = [x.get_heuristica() for x in aux]
         heuristicas = list(zip(ids, heuristicas))
-        """     menor_umbral = list(filter(lambda h: h[1] < 0.15, heuristicas))
-        menor_umbral.append(max(heuristicas, key = operator.itemgetter(1)))
+        menor_umbral = list(filter(lambda h: h[1] > 0.25, heuristicas))
+        longitud = len(menor_umbral)
         
-        if menor_umbral:
+        if longitud != 0:
+            media_soldados = (self.get_nsoldiers() // longitud)
+            for id_nodo, _ in menor_umbral:
+                nodo = total_map.get(id_nodo)
+                nodo.add_soldiers(media_soldados)
+                self.substractn_soldiers(media_soldados)
+                nodo.create_heuristica()
+        else:
+            longitud_aux = len(ids)
+            media_soldados = (self.get_nsoldiers() // longitud_aux)
+            for id_nodo in ids:
+                nodo = total_map.get(id_nodo)
+                nodo.add_soldiers(media_soldados)
+                self.substractn_soldiers(media_soldados)
+                nodo.create_heuristica()
+
+        """         if menor_umbral:
             id_nodo, _ = r.choice(menor_umbral)
             nodo = self.get_nodesHolded().get(id_nodo)
             
         else:
             id_nodo, _ = max(heuristicas, key = operator.itemgetter(1))
-            nodo = total_map.get(id_nodo) """
+            nodo = total_map.get(id_nodo)
         
-        id_nodo, _ = max(heuristicas, key = operator.itemgetter(1))
+        id_nodo, _ = max(heuristicas, key = operator.itemgetter(1)) 
         nodo = total_map.get(id_nodo)
         nodo.add_soldiers(1)
         self.substractn_soldiers(1)
         nodo.create_heuristica()
-        return nodo
+        return nodo """
 
 
     def tirar_dado(self, nodoAtaque, nodoDefensa):                                      # Si devuelve True el ataque se ha realizado con exito, y False si ha fallado el ataque
@@ -194,37 +215,74 @@ class Player:
 
     def inicializar_sold_terr(self, total_map):
         
-        territorios = list(total_map.values())
+        territorios = list(total_map.keys())
         aux = territorios.copy()
-        ids = list(total_map.keys())
-        heuristicas = [x.get_heuristica() for x in aux]
-        heuristicas = list(zip(ids, heuristicas))
-        menor_umbral = list(filter(lambda h: h[1] < 0.20, heuristicas))
         
-        if menor_umbral:                                                        # Devuelve True si la lista no esta vacia y False si esta vacia
-            id_nodo, heur = r.choice(menor_umbral)
+        id_nodo = r.choice(aux)
+        nodo = total_map.get(id_nodo)
+
+        while (nodo.get_player() != self) and (nodo.get_player() is not None):
+            aux.remove(id_nodo)
+            id_nodo = r.choice(aux)
             nodo = total_map.get(id_nodo)
-
-            while (nodo.get_player() != self) and (nodo.get_player() is not None):
-                menor_umbral.remove((id_nodo, heur))
-                if menor_umbral:
-                    id_nodo, heur = r.choice(menor_umbral)
-                    nodo = total_map.get(id_nodo)
-                else:
-                    nodo = self.put_soldiers_in_territory(total_map)
-                    return
-            
-        else:
-            id_nodo, max_heur = max(heuristicas, key = operator.itemgetter(1))
-            nodo = total_map.get(id_nodo)
-
-            while (nodo.get_player() != self) and (nodo.get_player() is not None):
-                heuristicas.remove((id_nodo, max_heur))
-                id_nodo, max_heur = max(heuristicas, key = operator.itemgetter(1))
-                nodo = total_map.get(id_nodo)
-
+        
         nodo.add_soldiers(1)
         self.substractn_soldiers(1)
         nodo.set_player(self)
-        self.add_nodeHolded(ids[territorios.index(nodo)] , nodo)
+        self.add_nodeHolded(id_nodo , nodo)
         nodo.create_heuristica()
+
+    def reordenacion(self, riskMap):
+        isPath = 0
+        territorios = list(self.get_nodesHolded().values())
+        aux = territorios.copy()
+        ids = list(self.get_nodesHolded().keys())
+        heuristicas = [x.get_heuristica() for x in aux]
+        heuristicas = list(zip(ids, heuristicas))
+        id_max_heur = max(heuristicas, key = operator.itemgetter(1))[0]
+        umbral = list(filter(lambda h: h[1] == 0, heuristicas))
+        umbral_aux = umbral.copy()
+
+        for id_nodo, heur in umbral_aux:
+            if self.get_nodesHolded().get(id_nodo).get_soldiers() <= 1:
+                umbral.remove((id_nodo, heur))
+
+        if umbral:
+            for id_nodo, _ in umbral:
+                isPath = False
+                list_paths = nx.all_simple_paths(riskMap, id_nodo, id_max_heur)
+            
+                for path in list_paths:
+                    for i in path:
+                        if i not in ids:                                                                
+                            isPath = False
+                            break
+                        isPath = True
+                    if not isPath:
+                        continue
+                    else:
+                        print("Se han trasladado " + str(self.get_nodesHolded().get(id_nodo).get_soldiers()-1) + " soldados desde el nodo " + str(id_nodo) + " hasta el nodo " + str(id_max_heur))
+                        self.get_nodesHolded().get(id_max_heur).add_soldiers(self.get_nodesHolded().get(id_nodo).get_soldiers()-1)
+                        self.get_nodesHolded().get(id_nodo).set_soldiers(1)
+                        break
+            
+        print("Fin de la reordenacion")
+
+
+    def continentes(self, list_cont):
+        ids = list(self.get_nodesHolded().keys())
+        cont_completos = 0
+        for cont in list_cont:
+            if set(cont) <= set(ids):
+                cont_completos += 1
+        print(cont_completos)
+        return cont_completos
+
+
+
+        # ATAQUE ATACAR AL QUE MAS PROB DE GANAR TENGAS (CALCULAR PROB)
+        # ESCRIBE EL REPORT PUTO TONTO Y DENTRO DE POCO A SER POSIBLE QUE PARECES SUBNORMAL
+
+        ##### IMPORTANTE. LA REWARD PUEDE SER EN FUNCION DE LOS SOLDADOS QUE GANO Y DE LOS TERRITOIOS QUE TENGA. POR EJEMPLO SI GANO 10 SOLDADOS Y TENGO 7 TERRITORIOS DESPUES DE HACER UNA ACCION PUES LA REWARD SERIA ALGO COMO 10 + 13.
+        ##### PERO SI HAGO OTRA ACCION QUE HACE QUE TENGA UN TERRITORIO MAS PERO QUE GANE MAS SOLDADOS EN EL SIGUIENTE TURNO SERIA POR EJEMPLO 15 (SOLDADOS QUE GANO PORQUE HE CONQUISTADO UN CONTINENTE) + 8 (TERRITORIOS QUE TENGO)
+        ##### DE IGUAL MANERA SI PIERDO.
