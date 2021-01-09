@@ -109,7 +109,8 @@ if __name__ == '__main__':
             sold_nuevos = 10 + (5*num_count)
             print("Se añaden " + str(sold_nuevos) + " soldados nuevos.")
             player1.addn_soldiers(sold_nuevos)
-            player1.player_turn(player2, total_map)
+            player1.put_soldiers_in_territory(total_map)
+            player1.attack(player2, total_map)
             player1.reordenacion(riskMap)
             binary = False
         else:
@@ -117,7 +118,8 @@ if __name__ == '__main__':
             sold_nuevos = 10 + (5*num_count)
             print("Se añaden " + str(sold_nuevos) + " soldados nuevos.")
             player2.addn_soldiers(sold_nuevos)
-            player2.player_turn(player1, total_map)
+            player2.put_soldiers_in_territory(total_map)
+            player2.attack(player1, total_map)
             player2.reordenacion(riskMap)
             binary = True
         

@@ -1,6 +1,9 @@
 import random as r
 import operator
 import networkx as nx
+from estado import State
+from mcst_agent import mctsAgent
+from node_tree import Node_Tree
 from nodes import Node
 
 class Player:
@@ -65,9 +68,9 @@ class Player:
 
     # Funciones del agente
 
-    def player_turn(self, p_other, total_map):                                                                      # Primero atacar el arbol
+    def attack(self, p_other, total_map):                                                                      # Primero atacar el arbol
 
-        self.put_soldiers_in_territory(total_map)
+        state = total_map.copy()
 
         for v in self._nodesHolded.values():
             v.create_heuristica()
@@ -102,13 +105,13 @@ class Player:
         if sold_vecinos:
             id_nodo, _ = min(sold_vecinos, key = operator.itemgetter(1))
             n_target = total_map.get(id_nodo)
-            self.attack(n_attack, n_target, p_other)
+            self.tira_dados(n_attack, n_target, p_other)
 
         else:
             print("No hay enemigo al que atacar")
 
                 
-    def attack(self, attack, target, p_other):
+    def tira_dados(self, attack, target, p_other):
          
         if self.tirar_dado(attack, target):
             if attack.get_soldiers() > target.get_soldiers():
