@@ -1,16 +1,19 @@
 import random as r
 import operator
 import networkx as nx
+import copy
 from estado import State
-from mcst_agent import mctsAgent
+from mcst_agent import McstAgent
 from node_tree import Node_Tree
 from nodes import Node
 
 class Player:
-    def __init__(self, num, nodesHolded, nsoldiers):
+    def __init__(self, num, nodesHolded, nsoldiers, riskMap, list_cont):
         self._num = num
         self._nodesHolded = nodesHolded.copy()
         self._nsoldiers = nsoldiers
+        self._riskMap = riskMap
+        self._list_cont = list_cont
 
     #DEFINIMOS SETTERS
 
@@ -50,9 +53,10 @@ class Player:
     def add_nodeHolded(self, idNode, node):
         self._nodesHolded.setdefault(idNode, node)
 
-    def del_node(self, idNodeTarget, player):
-        nodeTarget = self._nodesHolded.pop(idNodeTarget)
-        nodeTarget.set_player(player)
+    def del_node(self, idNodeTarget, total_map):
+        nodeTarget = total_map.get(idNodeTarget)
+        if nodeTarget._player._num != 0:
+            nodeTarget = self._nodesHolded.pop(idNodeTarget)
 
     def addn_soldiers(self, n):
         self._nsoldiers += n
@@ -68,11 +72,18 @@ class Player:
 
     # Funciones del agente
 
-    def attack(self, p_other, total_map):                                                                      # Primero atacar el arbol
+    def attack(self, p_other, total_map):                                                                      
 
-        state = total_map.copy()
+        copy_player = copy.deepcopy(self)
+        state = State(copy.deepcopy(total_map), copy_player, copy.deepcopy(p_other))                                            # Mirar como meter una copia
+        mcst = McstAgent(state, copy_player)
+        mcst.busqueda(5)
+        mejor_accion = mcst.mejor_jugada()
+        n_ataque, objetivo = mejor_accion
+        print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque.idN) + "hacia " + str(objetivo.idN))
+        self.tira_dados(n_ataque, objetivo, p_other, total_map)
 
-        for v in self._nodesHolded.values():
+        """         for v in self._nodesHolded.values():
             v.create_heuristica()
         
         territorios = list(self.get_nodesHolded().values())
@@ -109,18 +120,30 @@ class Player:
 
         else:
             print("No hay enemigo al que atacar")
-
+        """
                 
-    def tira_dados(self, attack, target, p_other):
-         
-        if self.tirar_dado(attack, target):
-            if attack.get_soldiers() > target.get_soldiers():
+    def tira_dados(self, attack, target, p_other, total_map):
+
+        if target.get_player()._num == 0:
+            if attack.get_soldiers()-1 != 0:
+                target.set_soldiers(attack.get_soldiers()-1)
+            else:
+                target.set_soldiers(1)
+            attack.set_soldiers(1)
+            self.add_nodeHolded(target.get_idN(), target)
+            target.set_player(self)
+            print("Territorio neutro conquistado")
+
+        elif self.tirar_dado(attack, target):
+            if attack.get_soldiers() >= target.get_soldiers():
                 self.add_nodeHolded(target.get_idN(), target)
                 target.set_soldiers(attack.get_soldiers()-1)
                 if target.get_soldiers() == 0:
                     target.set_soldiers(1)
                 attack.set_soldiers(1)
-                p_other.del_node(target.get_idN(), attack.get_player())
+                j_anterior = target.get_player()._num
+                target.set_player(self)
+                p_other.del_node(target.get_idN(), total_map)
                 print("Ataque desde nodo: " + str(attack.get_idN()) + " realizado con éxito, tus soldados han vencido a la defensa del nodo: " + str(target.get_idN()) + "\n")
             else:
                 target.set_soldiers(abs(attack.get_soldiers()-target.get_soldiers()))
@@ -224,7 +247,7 @@ class Player:
         id_nodo = r.choice(aux)
         nodo = total_map.get(id_nodo)
 
-        while (nodo.get_player() != self) and (nodo.get_player() is not None):
+        while (nodo.get_player()._num != self._num) and (nodo.get_player()._num != 0):
             aux.remove(id_nodo)
             id_nodo = r.choice(aux)
             nodo = total_map.get(id_nodo)
@@ -235,7 +258,7 @@ class Player:
         self.add_nodeHolded(id_nodo , nodo)
         nodo.create_heuristica()
 
-    def reordenacion(self, riskMap):
+    def reordenacion(self):
         isPath = 0
         territorios = list(self.get_nodesHolded().values())
         aux = territorios.copy()
@@ -253,7 +276,7 @@ class Player:
         if umbral:
             for id_nodo, _ in umbral:
                 isPath = False
-                list_paths = nx.all_simple_paths(riskMap, id_nodo, id_max_heur)
+                list_paths = nx.all_simple_paths(self._riskMap, id_nodo, id_max_heur)
             
                 for path in list_paths:
                     for i in path:
@@ -272,14 +295,23 @@ class Player:
         print("Fin de la reordenacion")
 
 
-    def continentes(self, list_cont):
+    def sold_continentes(self):
         ids = list(self.get_nodesHolded().keys())
         cont_completos = 0
-        for cont in list_cont:
+        for cont in self._list_cont:
             if set(cont) <= set(ids):
                 cont_completos += 1
         print(cont_completos)
-        return cont_completos
+        sold_nuevos = 10 + (5*cont_completos)
+        print("Se añaden " + str(sold_nuevos) + " soldados nuevos.")
+
+        self.addn_soldiers(sold_nuevos)
+
+    def actualizar_heur(self):
+        territorios = list(self.get_nodesHolded().values())
+        for t in territorios:
+            t.create_heuristica()
+
 
 
 

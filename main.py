@@ -69,13 +69,16 @@ def initialize():
     riskMap.add_edges_from([(5,3), (5,2), (5,1), (3,2), (2,1), (2,6), (2,4), (6,1), (6,4), (5,8), (7,8), (7,9), (8,9), (8,10), (9,10), (5,17), (5,15), (3,15), (17,11), (17,13), (17,15), (13,16), (13,14), (13,15), (13,11), (15,16), (16,14), (11,12), (11,14), (12,14)])
     total_map={}
 
+    player_None = Player(0,{},0,{},[])
+
     for i in range(1, max_territorios):
-        node = Node(i, None, 0, [])
+        node = Node(i, player_None, 0, [])
         total_map.setdefault(i, node)
     set_neighbours(riskMap, total_map)
 
-    player1 = Player(1, {}, 10)
-    player2 = Player(2, {}, 10)
+    player1 = Player(1, {}, 10, riskMap, list_cont)
+    player2 = Player(2, {}, 10, riskMap, list_cont)
+
 
     for n in total_map.values():
         n.create_heuristica()
@@ -105,22 +108,16 @@ if __name__ == '__main__':
         num_cont = 0
         sold_nuevos = 0
         if binary == True:
-            num_count = player1.continentes(list_cont)
-            sold_nuevos = 10 + (5*num_count)
-            print("Se añaden " + str(sold_nuevos) + " soldados nuevos.")
-            player1.addn_soldiers(sold_nuevos)
+            player1.sold_continentes()
             player1.put_soldiers_in_territory(total_map)
             player1.attack(player2, total_map)
-            player1.reordenacion(riskMap)
+            player1.reordenacion()
             binary = False
         else:
-            num_count = player2.continentes(list_cont)
-            sold_nuevos = 10 + (5*num_count)
-            print("Se añaden " + str(sold_nuevos) + " soldados nuevos.")
-            player2.addn_soldiers(sold_nuevos)
+            player2.sold_continentes()
             player2.put_soldiers_in_territory(total_map)
             player2.attack(player1, total_map)
-            player2.reordenacion(riskMap)
+            player2.reordenacion()
             binary = True
         
         draw_graph(player1, player2, total_map)

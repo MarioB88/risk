@@ -1,3 +1,5 @@
+import copy
+
 class Node:
     def __init__(self, idN, player, soldiers, neighbours, heuristica = 0):
         self._idN = idN
@@ -50,30 +52,46 @@ class Node:
     def add_soldiers(self, n):
         self._soldiers += n
 
+    def get_enemy_neigh(self):
+        neigh = self._neighbours[:]
+        ids=[]
+        enemies = list(filter(lambda x: x._player._num != self._player._num, neigh))
+        return enemies
 
     def create_heuristica(self):
         bst = 0
         suma_bsr = 0
+        solo_neutros = True
         nsoldados = self.get_soldiers()                                                           # Soldados del territorio aliado
 
-        vecinos = self.get_neighbours()
-        for v in vecinos:
-            if v.get_player() != self.get_player():
-                bst += v.get_soldiers()
+        enemigos = self.get_enemy_neigh()
+        if len(enemigos) == 0:
+            solo_neutros = False
+        for e in enemigos:
+            if e.get_player()._num != 0:
+                solo_neutros = False
+            bst += e.get_soldiers()
         
         if bst != 0:
             self._bsr = nsoldados/bst
         else:
-            self._bsr = 0
+            if not solo_neutros:
+                self._bsr = 0
+            else:
+                self._heuristica = 1                                                  
+                return
 
-        if self._player is not None:
-            for v in self._player.get_nodesHolded().values():
-                suma_bsr += v._bsr
-                if suma_bsr != 0:
-                    nbsr = self._bsr/suma_bsr                                                           # BSR normalizada
-                    self._heuristica = nbsr
-                else:
-                    self._heuristica = 0
+        if self._player._num != 0:
+            if len(self._player.get_nodesHolded().values()) == 1:
+                self._heuristica = 1
+            else:
+                for v in self._player.get_nodesHolded().values():
+                    suma_bsr += v._bsr
+                    if suma_bsr != 0:
+                        nbsr = self._bsr/suma_bsr                                                           # BSR normalizada
+                        self._heuristica = nbsr
+                    else:
+                        self._heuristica = 0
         
         else:
             self._heuristica = 0
