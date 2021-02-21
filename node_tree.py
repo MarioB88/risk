@@ -15,4 +15,12 @@ class Node_Tree:
         if self.nvisited==0:
             return 0
         else:
-            return reward_medio + 2* sqrt(log(simulaciones) / self.nvisited)
+            return reward_medio + 2* sqrt(log(simulaciones) / self.nvisited)                    ############ DA NEGATIVO WTF ##############
+
+    def __str__(self):
+        if self.accion is None:
+            cadena = "Nodo con la accion None. Veces visitado " + str(self.nvisited) + " y valor de ucb de " + str(self.ucb)
+        else:
+            id_n_ataque, id_objetivo = self.accion
+            cadena = "Nodo con la accion " + str(id_n_ataque) + " " + str(id_objetivo) + ". Veces visitado " + str(self.nvisited) + ", puntuacion de " + str(self.reward) +" y valor de ucb de " + str(self.ucb)
+        return cadena

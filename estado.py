@@ -29,12 +29,12 @@ class State:
 
         return self.acciones
 
-    def jugada(self, accion):                       ####################### HACER QUE ACCION SEAN LA ID DEL ATACANTE Y LA ID DEL OBJETIVO, NO LOS NODOS EN SI ##############
+    def jugada(self, accion):                       
         player = None
         p_other = None
 
         if accion is not None:
-            n_ataque, objetivo = accion
+            id_n_ataque, id_objetivo = accion
             if self.turn == 0:
                 player = self.player
                 p_other = self.p_other
@@ -42,7 +42,7 @@ class State:
                 player = self.p_other
                 p_other = self.player
 
-            player.tira_dados(n_ataque, objetivo, p_other, self.total_map)
+            player.tira_dados(self.total_map.get(id_n_ataque), self.total_map.get(id_objetivo), p_other, self.total_map)
             player.reordenacion()
             player.sold_continentes()
             player.put_soldiers_in_territory(self.total_map)

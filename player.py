@@ -80,8 +80,8 @@ class Player:
         mcst.busqueda(5)
         mejor_accion = mcst.mejor_jugada()
         n_ataque, objetivo = mejor_accion
-        print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque.idN) + "hacia " + str(objetivo.idN))
-        self.tira_dados(n_ataque, objetivo, p_other, total_map)
+        print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
+        self.tira_dados(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)
 
         """         for v in self._nodesHolded.values():
             v.create_heuristica()
