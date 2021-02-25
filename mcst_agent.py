@@ -3,6 +3,7 @@ import time
 import copy
 from math import sqrt, log
 from node_tree import Node_Tree
+from operator import itemgetter
 #from player import Player
 
 class McstAgent:
@@ -31,15 +32,19 @@ class McstAgent:
         state = copy.deepcopy(self.root_state)
         while len(node.children) != 0 :
             children = node.children.values()
-            ucbs = [c.ucb for c in children]
-            maximo = max(ucbs)
-            nodo_maximo = [c for c in children if c.ucb == maximo]
-            node = r.choice(nodo_maximo)
-            print("Realizo una accion para pasar al siguiente hijo")
-            state.jugada(node.accion)
-
-            if node.nvisited == 0:
+            ucbs = [(c.ucb, c.nvisited) for c in children]
+            minimo_visitado = min(ucbs, key=itemgetter(1))[1]
+            if minimo_visitado == 0:
+                no_visitados = [c for c in children if c.nvisited == minimo_visitado]
+                node = r.choice(no_visitados)
+                state.jugada(node.accion)
                 return node, state
+            else:
+                maximo = max(ucbs, key=itemgetter(0))[0]
+                nodo_maximo = [c for c in children if c.ucb == maximo]
+                node = r.choice(nodo_maximo)
+                print("Realizo una accion para pasar al siguiente hijo")
+                state.jugada(node.accion)
         
         if self.expand(node, state):                                        # Devuelve True si se puede expandir y False si no
             node = r.choice(list(node.children.values()))
@@ -57,7 +62,7 @@ class McstAgent:
             node, state = self.select_node()
             winner = self.roll_out(state)
             n_rollout += 1
-            self.backup(node, winner)                                                                       ############ DA NEGATIVO WTF ##############
+            self.backup(node, winner, n_rollout)                                                                       ############ DA NEGATIVO WTF ##############
         
         self.tiempo_busqueda = time.perf_counter() - inicio
         print("\nTiempo de busqueda: " + str(self.tiempo_busqueda))
@@ -82,7 +87,7 @@ class McstAgent:
             acciones = []
         return state.winner()
 
-    def backup(self, node, winner):
+    def backup(self, node, winner, n_rollout):
         
         puntuacion = 0
 
@@ -94,7 +99,7 @@ class McstAgent:
         while node is not None:
             node.nvisited += 1
             node.reward += puntuacion
-            node.calculo_ucb(self.rollouts)
+            node.calculo_ucb(n_rollout)
             node = node.parent
 
     def mejor_jugada(self):                                                         # Escoge el nodo que mas puntuacion tiene, o lo que es lo mismo, el que mas se ha simulado

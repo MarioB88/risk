@@ -15,7 +15,7 @@ class Node_Tree:
         if self.nvisited==0:
             return 0
         else:
-            return reward_medio + 2* sqrt(log(simulaciones) / self.nvisited)                    ############ DA NEGATIVO WTF ##############
+            self.ucb = reward_medio + 2* sqrt(log(simulaciones) / self.nvisited)                    
 
     def __str__(self):
         if self.accion is None:

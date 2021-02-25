@@ -75,13 +75,13 @@ class Player:
     def attack(self, p_other, total_map):                                                                      
 
         copy_player = copy.deepcopy(self)
-        state = State(copy.deepcopy(total_map), copy_player, copy.deepcopy(p_other))                                            # Mirar como meter una copia
+        state = State(copy.deepcopy(total_map), copy_player, copy.deepcopy(p_other))                                            
         mcst = McstAgent(state, copy_player)
-        mcst.busqueda(5)
+        mcst.busqueda(30)
         mejor_accion = mcst.mejor_jugada()
         n_ataque, objetivo = mejor_accion
         print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
-        self.tira_dados(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)
+        self.tira_dados(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)                               # Hacer que ataque más veces en su turno en vez de una sola vez hasta que reciba la acción de no atacar
 
         """         for v in self._nodesHolded.values():
             v.create_heuristica()

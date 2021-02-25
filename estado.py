@@ -55,9 +55,12 @@ class State:
 
     def winner(self):
 
-        if len(self.player.get_nodesHolded().keys()) == 0 or len(self.p_other.get_nodesHolded().keys()) == 0:
+        if len(self.player.get_nodesHolded().keys()) == 0:
             print("GANADOR JUGADOR: " + str(self.player._num))
             winner = (True, self.player)
+        elif len(self.p_other.get_nodesHolded().keys()) == 0:
+            print("GANADOR JUGADOR: " + str(self.p_other._num))
+            winner = (True, self.p_other)
         else:
             winner = (False, None)
 
