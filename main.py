@@ -111,13 +111,13 @@ if __name__ == '__main__':
             player1.sold_continentes()
             player1.put_soldiers_in_territory(total_map)
             player1.attack(player2, total_map)
-            player1.reordenacion()
+            player1.reordenacion(total_map)
             binary = False
         else:
             player2.sold_continentes()
             player2.put_soldiers_in_territory(total_map)
             player2.attack(player1, total_map)
-            player2.reordenacion()
+            player2.reordenacion(total_map)
             binary = True
         
         draw_graph(player1, player2, total_map)
