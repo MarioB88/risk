@@ -54,7 +54,6 @@ class Node:
 
     def get_enemy_neigh(self):
         neigh = self._neighbours[:]
-        ids=[]
         enemies = list(filter(lambda x: x._player._num != self._player._num, neigh))
         return enemies
 

@@ -73,7 +73,7 @@ class Player:
 
     # Funciones del agente
 
-    def attack(self, p_other, total_map):                                                                      
+    def attack_IA(self, p_other, total_map):                                                                      
 
         copy_player = copy.deepcopy(self)
         state = State(copy.deepcopy(total_map), copy_player, copy.deepcopy(p_other))                                            
@@ -87,7 +87,7 @@ class Player:
         if n_ataque != 0:
             print("El ataque con " + str(total_map.get(n_ataque)._soldiers) + " soldados y la defensa con " + str(total_map.get(objetivo)._soldiers))
         self.tira_dados(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)
-        time.sleep(10)
+        time.sleep(1)
 
         while n_ataque != 0:
             copy_player = copy.deepcopy(self)
@@ -102,9 +102,10 @@ class Player:
             print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
             if n_ataque != 0:
                 print("El ataque con " + str(total_map.get(n_ataque)._soldiers) + " soldados y la defensa con " + str(total_map.get(objetivo)._soldiers))
-            self.tira_dados(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)                               # Hacer que ataque más veces en su turno en vez de una sola vez hasta que reciba la acción de no atacar
-            time.sleep(10)
+            self.tira_dados(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)                               
+            time.sleep(1)
         print("Fin del turno")
+        self.actualizar_heur(total_map)
 
         """         for v in self._nodesHolded.values():
             v.create_heuristica()
@@ -144,7 +145,61 @@ class Player:
         else:
             print("No hay enemigo al que atacar")
         """
-                
+
+    def attack_human(self, p_other, total_map, n_ataque, objetivo):
+        enemigos = total_map.get(n_ataque).get_enemy_neighbours()
+        aux=[]
+        for e in enemigos:
+            aux.append(e._idN)
+        if n_ataque not in list(self.get_nodesHolded().keys()):
+            print("Selecciona un territorio que sea tuyo.")
+        elif objetivo not in list(p_other.get_nodesHolded().keys()):
+            print("Ataca a un territorio que no sea tuyo.")
+        elif objetivo not in aux:
+            print("Ataca a un objetivo que sea tu vecino")
+        else:
+            self.tira_dados2(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)
+            self.actualizar_heur(total_map)
+
+    def tira_dados2(self, attack, target, p_other, total_map):
+
+        if attack == 0 or attack is None:
+            print("Acción de no atacar seleccionada")
+            return
+
+        if target.get_player()._num == 0:
+            if attack.get_soldiers()-1 != 0:
+                target.set_soldiers(attack.get_soldiers()-1)
+            else:
+                target.set_soldiers(1)
+            attack.set_soldiers(1)
+            self.add_nodeHolded(target.get_idN(), target)
+            target.set_player(self)
+            print("Territorio neutro conquistado")
+
+        elif self.tirar_dado(attack, target):
+            if attack.get_soldiers() >= target.get_soldiers():
+                self.add_nodeHolded(target.get_idN(), target)
+                target.set_soldiers(attack.get_soldiers()-1)
+                if target.get_soldiers() == 0:
+                    target.set_soldiers(1)
+                attack.set_soldiers(1)
+                target.set_player(self)
+                p_other.del_node(target.get_idN(), total_map)
+                print("Ataque desde nodo: " + str(attack.get_idN()) + " realizado con éxito, tus soldados han vencido a la defensa del nodo: " + str(target.get_idN()) + "\n")
+            else:
+                target.set_soldiers(abs(attack.get_soldiers()-target.get_soldiers()))
+                if target.get_soldiers() == 0:
+                    target.set_soldiers(1)
+                print("Ataque desde nodo: " + str(attack.get_idN()) + " realizado con éxito, pero no has logrado conquistar el nodo: " + str(target.get_idN()) + "\n")
+        else:
+            diff = attack.get_soldiers()-target.get_soldiers()
+            if diff > 0:
+                attack.set_soldiers(attack.get_soldiers()-target.get_soldiers())
+            else:
+                attack.set_soldiers(1)
+            print("Fallo en el ataque desde nodo: " + str(attack.get_idN()) + ", tus soldados han caido en combate\n")
+    
     def tira_dados(self, attack, target, p_other, total_map):
 
         if attack == 0 or attack is None:
@@ -168,7 +223,6 @@ class Player:
                 if target.get_soldiers() == 0:
                     target.set_soldiers(1)
                 attack.set_soldiers(1)
-                j_anterior = target.get_player()._num
                 target.set_player(self)
                 p_other.del_node(target.get_idN(), total_map)
                 #print("Ataque desde nodo: " + str(attack.get_idN()) + " realizado con éxito, tus soldados han vencido a la defensa del nodo: " + str(target.get_idN()) + "\n")
@@ -284,7 +338,6 @@ class Player:
     def reordenacion(self, total_map):
         isPath = 0
         ids_territorios = list(self.get_nodesHolded().keys())
-        items_territorio = list(self.get_nodesHolded().items())
         id_max_heur = max([(i, total_map.get(i)._heuristica) for i in ids_territorios], key = operator.itemgetter(1))[0]                         ####### ENCONTRAR EL NODO CON MAYOR HEURISTICA ########
         umbral = list(filter(lambda i: total_map.get(i)._heuristica == 0 and total_map.get(i)._soldiers > 1, ids_territorios))
 

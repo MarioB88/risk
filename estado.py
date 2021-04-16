@@ -43,7 +43,7 @@ class State:
             player.tira_dados(self.total_map.get(id_n_ataque), self.total_map.get(id_objetivo), p_other, self.total_map)
 
         player.reordenacion(self.total_map)
-        player.sold_continentes()                                       ######## HACERLO COMO EN UNA PARTIDA REAL ATACAR HASTA QUE SE DECIDA NO ATACAR MAS #########
+        player.sold_continentes()                                       
         player.put_soldiers_in_territory(self.total_map)
         player.actualizar_heur(self.total_map)
 

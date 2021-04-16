@@ -176,7 +176,7 @@ class McstAgent:
                 cadena = self.print_tree(tree_nodes = self.root.children, cadena = cadena, nivel = copy.copy(nivel) + 1)
         else:
             for tn in tree_nodes.values():
-                for i in range(0,nivel):
+                for _ in range(0,nivel):
                     cadena += "\t"
                 cadena += str(tn) + "\n"
                 if len(tn.children) !=0:
