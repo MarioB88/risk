@@ -18,8 +18,7 @@ class State:
         else:
             player = self.p_other
         territorios = list(player.get_nodesHolded().keys())
-        posible_ataque = list(filter(lambda x: self.total_map.get(x)._soldiers > 1 and self.total_map.get(x)._heuristica > 0, territorios))
-        #posible_ataque = list(filter(lambda x: self.total_map.get(x)._heuristica > 0, aux)) 
+        posible_ataque = list(filter(lambda x: self.total_map.get(x)._heuristica > 0, territorios))
 
         for id_terr in posible_ataque:
             terr = self.total_map.get(id_terr)
@@ -45,7 +44,6 @@ class State:
         player.reordenacion(self.total_map)
         player.sold_continentes()                                       
         player.put_soldiers_in_territory(self.total_map)
-        player.actualizar_heur(self.total_map)
 
         if self.turn == 0:
             self.turn = 1

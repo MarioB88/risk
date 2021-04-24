@@ -53,8 +53,7 @@ class Node:
         self._soldiers += n
 
     def get_enemy_neigh(self):
-        neigh = self._neighbours[:]
-        enemies = list(filter(lambda x: x._player._num != self._player._num, neigh))
+        enemies = list(filter(lambda x: x._player._num != self._player._num, self._neighbours))
         return enemies
 
     def create_heuristica(self):
@@ -96,4 +95,4 @@ class Node:
             self._heuristica = 0
 
 
-        ############## SIEMPRE DA 0 PORQUE LA HEURISTICA INICIAL SIEMPRE ESTA A 0 POR LO QUE LA SUMA DE TODAS LAS HEURISTICAS DE TUS TERRITORIOS SIEMPRE VA A SER 0 #################
+       

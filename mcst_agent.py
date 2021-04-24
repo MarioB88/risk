@@ -134,9 +134,18 @@ class McstAgent:
 
     def roll_out(self, state):
 
-        acciones=[]                                                                  # Este simboliza la acción de no atacar
-
+        acciones = []
+        
         while state.winner()[0] == False:
+            """ acciones = state.acciones_posibles()
+            if len(acciones) == 0:
+                accion = None
+                state.jugada(accion)
+                continue
+            else:
+                n_ataque = r.choice(list(acciones.keys()))
+                objetivo = r.choice(acciones.get(n_ataque))
+                state.jugada((n_ataque._idN, objetivo._idN)) """
             for n_ataque, objetivos in list(state.acciones_posibles().items()):                     # OPTIMIZAR
                 for o in objetivos:
                     acciones.append((n_ataque._idN, o._idN))

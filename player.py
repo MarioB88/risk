@@ -80,13 +80,13 @@ class Player:
         mcst = McstAgent(state, copy_player)
         #mcst.tipo_busqueda(limite_tiempo = 30)
         print("Nueva busqueda ...")
-        mcst.tipo_busqueda(max_rollouts= 1000)
+        mcst.tipo_busqueda(max_rollouts= 2000)
         mejor_accion = mcst.mejor_jugada()
         n_ataque, objetivo = mejor_accion
         print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
         if n_ataque != 0:
             print("El ataque con " + str(total_map.get(n_ataque)._soldiers) + " soldados y la defensa con " + str(total_map.get(objetivo)._soldiers))
-        self.tira_dados(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)
+        self.tira_dados2(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)
         time.sleep(1)
 
         while n_ataque != 0:
@@ -96,13 +96,13 @@ class Player:
             #mcst.update(state, copy_player)
             #mcst.tipo_busqueda(limite_tiempo = 20)
             print("Nueva busqueda ...")
-            mcst.tipo_busqueda(max_rollouts=1000)
+            mcst.tipo_busqueda(max_rollouts=2000)
             mejor_accion = mcst.mejor_jugada()
             n_ataque, objetivo = mejor_accion
             print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
             if n_ataque != 0:
                 print("El ataque con " + str(total_map.get(n_ataque)._soldiers) + " soldados y la defensa con " + str(total_map.get(objetivo)._soldiers))
-            self.tira_dados(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)                               
+            self.tira_dados2(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)                               
             time.sleep(1)
         print("Fin del turno")
         self.actualizar_heur(total_map)
@@ -147,13 +147,13 @@ class Player:
         """
 
     def attack_human(self, p_other, total_map, n_ataque, objetivo):
-        enemigos = total_map.get(n_ataque).get_enemy_neighbours()
+        enemigos = total_map.get(n_ataque).get_enemy_neigh()
         aux=[]
         for e in enemigos:
             aux.append(e._idN)
         if n_ataque not in list(self.get_nodesHolded().keys()):
             print("Selecciona un territorio que sea tuyo.")
-        elif objetivo not in list(p_other.get_nodesHolded().keys()):
+        elif total_map.get(objetivo)._player._num == self._num:
             print("Ataca a un territorio que no sea tuyo.")
         elif objetivo not in aux:
             print("Ataca a un objetivo que sea tu vecino")
@@ -339,7 +339,7 @@ class Player:
         isPath = 0
         ids_territorios = list(self.get_nodesHolded().keys())
         id_max_heur = max([(i, total_map.get(i)._heuristica) for i in ids_territorios], key = operator.itemgetter(1))[0]                         ####### ENCONTRAR EL NODO CON MAYOR HEURISTICA ########
-        umbral = list(filter(lambda i: total_map.get(i)._heuristica == 0 and total_map.get(i)._soldiers > 1, ids_territorios))
+        umbral = list(filter(lambda i: total_map.get(i)._heuristica == 0 and total_map.get(i)._soldiers >= 1, ids_territorios))
 
         if umbral:
             for id_nodo in umbral:
@@ -368,16 +368,9 @@ class Player:
         self.addn_soldiers(sold_nuevos)
 
     def actualizar_heur(self, total_map):
-        territorios = list(total_map.values())
+        territorios = list(self._nodesHolded.values())
         for t in territorios:
             t.create_heuristica()
 
 
-
-
-        # ATAQUE ATACAR AL QUE MAS PROB DE GANAR TENGAS (CALCULAR PROB)
         # ESCRIBE EL REPORT PUTO TONTO Y DENTRO DE POCO A SER POSIBLE QUE PARECES SUBNORMAL
-
-        ##### IMPORTANTE. LA REWARD PUEDE SER EN FUNCION DE LOS SOLDADOS QUE GANO Y DE LOS TERRITOIOS QUE TENGA. POR EJEMPLO SI GANO 10 SOLDADOS Y TENGO 7 TERRITORIOS DESPUES DE HACER UNA ACCION PUES LA REWARD SERIA ALGO COMO 10 + 13.
-        ##### PERO SI HAGO OTRA ACCION QUE HACE QUE TENGA UN TERRITORIO MAS PERO QUE GANE MAS SOLDADOS EN EL SIGUIENTE TURNO SERIA POR EJEMPLO 15 (SOLDADOS QUE GANO PORQUE HE CONQUISTADO UN CONTINENTE) + 8 (TERRITORIOS QUE TENGO)
-        ##### DE IGUAL MANERA SI PIERDO.
