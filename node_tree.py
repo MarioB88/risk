@@ -11,11 +11,12 @@ class Node_Tree:
         self.ucb = 0                                # formula = recompensa_media + 2* raiz_cuadrada(ln(numero de simulaciones totales)/(numero de veces que se ha visitado el nodo))
 
     def calculo_ucb(self, simulaciones):
-        reward_medio = self.reward / self.nvisited                  
+                     
         if self.nvisited==0:
-            return 0
-        else:
-            self.ucb = reward_medio + 2* sqrt(log(simulaciones) / self.nvisited)                    
+            self.ucb = float('inf')
+        else:  
+            self.ucb = self.reward + 2* sqrt(log(simulaciones) / self.nvisited)      
+        return self.ucb
 
     def __str__(self):
         if self.accion is None:

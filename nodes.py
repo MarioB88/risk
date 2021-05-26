@@ -52,6 +52,9 @@ class Node:
     def add_soldiers(self, n):
         self._soldiers += n
 
+    def substract_soldiers(self, n):
+        self._soldiers -= n
+
     def get_enemy_neigh(self):
         enemies = list(filter(lambda x: x._player._num != self._player._num, self._neighbours))
         return enemies
@@ -63,15 +66,16 @@ class Node:
         nsoldados = self.get_soldiers()                                                           # Soldados del territorio aliado
 
         enemigos = self.get_enemy_neigh()
+
         if len(enemigos) == 0:
             solo_neutros = False
         for e in enemigos:
+            s_enemigos = e.get_soldiers()
             if e.get_player()._num != 0:
                 solo_neutros = False
-            bst += e.get_soldiers()
-        
+            bst += s_enemigos
         if bst != 0:
-            self._bsr = nsoldados/bst
+            self._bsr = bst/nsoldados
         else:
             if not solo_neutros:
                 self._bsr = 0
@@ -85,11 +89,11 @@ class Node:
             else:
                 for v in self._player.get_nodesHolded().values():
                     suma_bsr += v._bsr
-                    if suma_bsr != 0:
-                        nbsr = self._bsr/suma_bsr                                                           # BSR normalizada
-                        self._heuristica = nbsr
-                    else:
-                        self._heuristica = 0
+                if suma_bsr != 0:
+                    nbsr = self._bsr/suma_bsr                                                           # BSR normalizada
+                    self._heuristica = nbsr
+                else:
+                    self._heuristica = 0
         
         else:
             self._heuristica = 0

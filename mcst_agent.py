@@ -5,6 +5,7 @@ import sys
 from math import sqrt, log
 from node_tree import Node_Tree
 from operator import itemgetter
+from nodes import Node
 #from player import Player
 
 umbral = 0.20
@@ -23,17 +24,20 @@ class McstAgent:
             return False
         
         for n_ataque, objetivos in list(state.acciones_posibles().items()):
-
+            
             for o in objetivos:
                 node = Node_Tree((n_ataque._idN, o._idN), parent)
                 parent.children.setdefault((n_ataque._idN,o._idN), node)
+        # for n_ataque, objetivo in list(state.acciones_posibles().items()):
+        #     node = Node_Tree((n_ataque._idN, objetivo._idN), parent)
+        #     parent.children.setdefault((n_ataque._idN,objetivo._idN), node)
         
         node = Node_Tree((0,0), parent)
         parent.children.setdefault((0,0), node)
 
         return True
     
-    def select_node(self):
+    def select_node(self, simulaciones):
         
         global umbral
         node = self.root
@@ -41,50 +45,39 @@ class McstAgent:
         while len(node.children) != 0 :
             children = node.children.values()
             list_children = list(children)
-            ucbs = [(c.ucb, c.nvisited) for c in children]
-            minimo_visitado = min(ucbs, key=itemgetter(1))[1]
-            if minimo_visitado == 0:
-                no_visitados = [c for c in children if c.nvisited == minimo_visitado]
-                node = r.choice(no_visitados)
-                while True:
-                    try:
-                        state.jugada(node.accion)
-                        break
-                    except KeyError:
-                        node = r.choice(no_visitados)
-                        continue
-                return node, state
-            else:
-                if r.random() < umbral:
-                    node = r.choice(list_children)
-                    while True:
-                        try:
-                            state.jugada(node.accion)
-                            break
-                        except KeyError:
-                            node = r.choice(list_children)
-                            continue
-                    return node, state
-                maximo = max(ucbs, key=itemgetter(0))[0]
-                nodo_maximo = [c for c in children if c.ucb == maximo]
-                node = r.choice(nodo_maximo)
-                while True:
-                    try:
-                        state.jugada(node.accion)
-                        break
-                    except KeyError:
-                        node = r.choice(list_children)
-                        continue
-        
-        if self.expand(node, state):                                        # Devuelve True si se puede expandir y False si no
-            node = r.choice(list(node.children.values()))
+            node = max(list_children, key = lambda x: x.calculo_ucb(simulaciones))
+            # max_ucb = max(list_children, key = lambda x: x.calculo_ucb(simulaciones))
+            # n_maxUcb = [n for n in list_children if n.ucb == max_ucb]
+            # node = r.choice(n_maxUcb)
             while True:
                 try:
                     state.jugada(node.accion)
                     break
                 except KeyError:
-                    list(node.children.values()).remove(node)
-                    node = r.choice(list(node.children.values()))
+                    list_children.remove(node)
+                    node = max(list_children, key = lambda x: x.calculo_ucb(simulaciones))
+                    # try:
+                    #     n_maxUcb.remove(node)
+                    # except:
+                    #     list_children.remove(node)
+                    # if len(n_maxUcb) == 0:
+                    #     node = r.choice(list_children)
+                    # else:
+                    #     node = r.choice(n_maxUcb)
+                    continue
+            if node.nvisited == 0:
+                return node, state
+
+        if self.expand(node, state):                                        # Devuelve True si se puede expandir y False si no
+            list_children = list(node.children.values())
+            node = r.choice(list_children)
+            while True:
+                try:
+                    state.jugada(node.accion)
+                    break
+                except KeyError:
+                    list_children.remove(node)
+                    node = r.choice(list_children)
                     continue
         return node, state
 
@@ -103,14 +96,15 @@ class McstAgent:
         n_rollout = 0
 
         while (time.perf_counter() - inicio) < limite_tiempo:
-            node, state = self.select_node()
+            node, state = self.select_node(n_rollout)
             winner = self.roll_out(state)
             n_rollout += 1
             self.backup(node, winner, n_rollout)                                                                       ############ DA NEGATIVO WTF ##############
         
         self.tiempo_busqueda = time.perf_counter() - inicio
         self.rollouts = n_rollout
-        print(self.print_tree())
+        #print(self.print_tree())
+        print(self.print_primeros_hijos())
         print("\nNumero de rollouts: " + str(self.rollouts))
         print("\nTiempo de busqueda: " + str(self.tiempo_busqueda))
 
@@ -120,61 +114,77 @@ class McstAgent:
         n_rollout = 0
 
         while n_rollout < max_rollouts:
-            node, state = self.select_node()
+            node, state = self.select_node(n_rollout)
             winner = self.roll_out(state)
             n_rollout += 1
-            self.backup(node, winner, n_rollout)                                                                       ############ DA NEGATIVO WTF ##############
+            self.backup(node, winner, n_rollout)
         
         self.tiempo_busqueda = time.perf_counter() - inicio
         self.rollouts = n_rollout
-        print(self.print_tree())
+        #print(self.print_tree())
+        print(self.print_primeros_hijos())
         print("\nNumero de rollouts: " + str(self.rollouts))
         print("\nTiempo de busqueda: " + str(self.tiempo_busqueda))
 
 
     def roll_out(self, state):
 
-        acciones = []
+        #acciones = []
         
         while state.winner()[0] == False:
-            """ acciones = state.acciones_posibles()
-            if len(acciones) == 0:
-                accion = None
-                state.jugada(accion)
-                continue
+            #acciones = state.acciones_posibles()
+            # if len(acciones) == 0:
+            #     accion = None
+            #     state.jugada(accion)
+            #     continue
+            # else:
+            #     n_ataque = r.choice(list(acciones.keys()))
+            #     objetivo = r.choice(acciones.get(n_ataque))
+            #     state.jugada((n_ataque._idN, objetivo._idN))
+            n_ataque, n_objetivo = state.accion_aleatoria()
+            
+            # acciones=[]
+            # for n_ataque, objetivos in list(state.acciones_posibles().items()):                     # OPTIMIZAR
+            #     for o in objetivos:
+            #         acciones.append((n_ataque._idN, o._idN))
+            # if len(acciones) == 0:
+            #     accion = None
+            # else:
+            #     accion = r.choice(acciones)
+            # state.jugada(accion)
+            if n_ataque == 0:
+                state.jugada(None)
             else:
-                n_ataque = r.choice(list(acciones.keys()))
-                objetivo = r.choice(acciones.get(n_ataque))
-                state.jugada((n_ataque._idN, objetivo._idN)) """
-            for n_ataque, objetivos in list(state.acciones_posibles().items()):                     # OPTIMIZAR
-                for o in objetivos:
-                    acciones.append((n_ataque._idN, o._idN))
-            if len(acciones) == 0:
-                accion = None
-            else:
-                accion = r.choice(acciones)
-            state.jugada(accion)
-            acciones = []
+                state.jugada((n_ataque, n_objetivo))
+            #acciones = []
         return state.winner()
 
     def backup(self, node, winner, n_rollout):
         
         puntuacion = 0
+        total = 0
 
         if self.player._num == winner[1]._num:
             puntuacion = 1
         else:
             puntuacion = -1
 
+        node.nvisited += 1
+        node.reward += puntuacion
+        node.calculo_ucb(n_rollout)
+        node = node.parent
         while node is not None:
             node.nvisited += 1
-            node.reward += puntuacion
+            children = list(node.children.values())
+            for n in children:
+                total += n.reward
+            node.reward = total/len(children)
             node.calculo_ucb(n_rollout)
             node = node.parent
 
-    def mejor_jugada(self):                                                         # Escoge el nodo que mas puntuacion tiene, o lo que es lo mismo, el que mas se ha simulado
-        max_ucb = max(self.root.children.values(), key = lambda n: n.ucb).ucb
-        max_repetidos = [n for n in self.root.children.values() if n.ucb == max_ucb]
+    def mejor_jugada(self):                                                                             # Escoge el nodo que mas se ha simulado
+        max_nvisited = max(self.root.children.values(), key = lambda n: n.nvisited).nvisited
+        max_repetidos = [n for n in self.root.children.values() if n.nvisited == max_nvisited]
         nodo_elegido = r.choice(max_repetidos)
         return nodo_elegido.accion
 
@@ -191,27 +201,9 @@ class McstAgent:
                 if len(tn.children) !=0:
                     cadena = self.print_tree(tree_nodes = tn.children, cadena = cadena, nivel = copy.copy(nivel) + 1)
         return cadena
-
-    def update(self, state, player):
-        self.root_state = copy.deepcopy(state)
-        self.player = player
-        acciones_posibles = list(state.acciones_posibles().items())
-        aux = []
-        aux.append((0,0))
-        for n_ataque, objetivos in acciones_posibles:
-            for o in objetivos:
-                aux.append((n_ataque._idN, o._idN))
-        root_children = list(self.root.children.keys())
-
-        for a in aux:
-            if a not in root_children:
-                node = Node_Tree(a, self.root_state)
-                self.root_state.children.setdefault(a, node)
-        
-        for c in root_children:
-            if c not in aux:
-                del self.root.children[c]
-
-
-
-# en el estado se crea un riskmap que ese es el estado inicial. A partir de ahi se va desarrollando.
+    
+    def print_primeros_hijos(self):
+        cadena = str(self.root) + "\n"
+        for c in list(self.root.children.values()):
+            cadena += "\t" + str(c) + "\n"
+        return cadena

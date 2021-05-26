@@ -66,21 +66,20 @@ class Player:
     def substractn_soldiers(self, n):
         if self._nsoldiers > 0:
             self._nsoldiers -= n
-        else:
-            return self._nsoldiers
         return self._nsoldiers
-
 
     # Funciones del agente
 
-    def attack_IA(self, p_other, total_map):                                                                      
+    def attack_IA(self, p_other, total_map, tipo, limite):                                                                      
 
         copy_player = copy.deepcopy(self)
         state = State(copy.deepcopy(total_map), copy_player, copy.deepcopy(p_other))                                            
         mcst = McstAgent(state, copy_player)
-        #mcst.tipo_busqueda(limite_tiempo = 30)
         print("Nueva busqueda ...")
-        mcst.tipo_busqueda(max_rollouts= 2000)
+        if tipo == "1":
+            mcst.tipo_busqueda(limite_tiempo = limite)
+        else:
+            mcst.tipo_busqueda(max_rollouts= limite)
         mejor_accion = mcst.mejor_jugada()
         n_ataque, objetivo = mejor_accion
         print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
@@ -89,14 +88,15 @@ class Player:
         self.tira_dados2(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)
         time.sleep(1)
 
-        while n_ataque != 0:
+        while n_ataque != 0 and len(p_other.get_nodesHolded()) != 0:
             copy_player = copy.deepcopy(self)
             state=State(copy.deepcopy(total_map), copy_player, copy.deepcopy(p_other))
             mcst = McstAgent(state, copy_player)
-            #mcst.update(state, copy_player)
-            #mcst.tipo_busqueda(limite_tiempo = 20)
             print("Nueva busqueda ...")
-            mcst.tipo_busqueda(max_rollouts=2000)
+            if tipo == "1":
+                mcst.tipo_busqueda(limite_tiempo = limite)
+            else:
+                mcst.tipo_busqueda(max_rollouts= limite)
             mejor_accion = mcst.mejor_jugada()
             n_ataque, objetivo = mejor_accion
             print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
@@ -105,46 +105,7 @@ class Player:
             self.tira_dados2(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)                               
             time.sleep(1)
         print("Fin del turno")
-        self.actualizar_heur(total_map)
-
-        """         for v in self._nodesHolded.values():
-            v.create_heuristica()
-        
-        territorios = list(self.get_nodesHolded().values())
-        aux = territorios.copy()
-        ids = list(self.get_nodesHolded().keys())
-        heuristicas = [x.get_heuristica() for x in aux]
-        heuristicas = list(zip(ids, heuristicas))
-
-        id_nodo, _ = max(heuristicas, key = operator.itemgetter(1))
-        n_attack = total_map.get(id_nodo)
-        ids = []
-        sold_defensa = []
-
-        neighbours = n_attack.get_neighbours()
-        for n in neighbours:
-            if n.get_player() == self:
-                continue
-            elif n.get_player() == None:
-                n.set_soldiers(n_attack.get_soldiers()-1)
-                n_attack.set_soldiers(1)
-                self.add_nodeHolded(n.get_idN(), n)
-                n.set_player(self)
-                print("Territorio neutro conquistado")
-                
-            else:
-                ids.append(n.get_idN())
-                sold_defensa.append(n.get_soldiers())
-
-        sold_vecinos = list(zip(ids, sold_defensa))
-        if sold_vecinos:
-            id_nodo, _ = min(sold_vecinos, key = operator.itemgetter(1))
-            n_target = total_map.get(id_nodo)
-            self.tira_dados(n_attack, n_target, p_other)
-
-        else:
-            print("No hay enemigo al que atacar")
-        """
+        self.actualizar_heur()
 
     def attack_human(self, p_other, total_map, n_ataque, objetivo):
         enemigos = total_map.get(n_ataque).get_enemy_neigh()
@@ -159,12 +120,16 @@ class Player:
             print("Ataca a un objetivo que sea tu vecino")
         else:
             self.tira_dados2(total_map.get(n_ataque), total_map.get(objetivo), p_other, total_map)
-            self.actualizar_heur(total_map)
+            self.actualizar_heur()
 
     def tira_dados2(self, attack, target, p_other, total_map):
 
         if attack == 0 or attack is None:
             print("Acción de no atacar seleccionada")
+            return
+
+        if attack.get_soldiers() == 1:
+            print("No puedes atacar con un soldado.")
             return
 
         if target.get_player()._num == 0:
@@ -203,7 +168,9 @@ class Player:
     def tira_dados(self, attack, target, p_other, total_map):
 
         if attack == 0 or attack is None:
-            #print("Acción de no atacar seleccionada")
+            return
+
+        if attack.get_soldiers() == 1:
             return
 
         if target.get_player()._num == 0:
@@ -214,7 +181,7 @@ class Player:
             attack.set_soldiers(1)
             self.add_nodeHolded(target.get_idN(), target)
             target.set_player(self)
-            #print("Territorio neutro conquistado")
+            target.create_heuristica()
 
         elif self.tirar_dado(attack, target):
             if attack.get_soldiers() >= target.get_soldiers():
@@ -225,56 +192,63 @@ class Player:
                 attack.set_soldiers(1)
                 target.set_player(self)
                 p_other.del_node(target.get_idN(), total_map)
-                #print("Ataque desde nodo: " + str(attack.get_idN()) + " realizado con éxito, tus soldados han vencido a la defensa del nodo: " + str(target.get_idN()) + "\n")
+                target.create_heuristica()
             else:
                 target.set_soldiers(abs(attack.get_soldiers()-target.get_soldiers()))
                 if target.get_soldiers() == 0:
                     target.set_soldiers(1)
-                #print("Ataque desde nodo: " + str(attack.get_idN()) + " realizado con éxito, pero no has logrado conquistar el nodo: " + str(target.get_idN()) + "\n")
+                
         else:
             diff = attack.get_soldiers()-target.get_soldiers()
             if diff > 0:
                 attack.set_soldiers(attack.get_soldiers()-target.get_soldiers())
             else:
                 attack.set_soldiers(1)
-            #print("Fallo en el ataque desde nodo: " + str(attack.get_idN()) + ", tus soldados han caido en combate\n")
-
-    def put_soldiers_in_territory(self, total_map):                                        
-
-        ids_territorios = list(self.get_nodesHolded().keys())
-        menor_umbral = list(filter(lambda i: total_map.get(i)._heuristica > 0, ids_territorios))
-        longitud = len(menor_umbral)
-        
-        if longitud != 0:
-            media_soldados = (self.get_nsoldiers() // longitud)
-            for id_nodo in menor_umbral:
-                nodo = total_map.get(id_nodo)
-                nodo.add_soldiers(media_soldados)
-                self.substractn_soldiers(media_soldados)
-                nodo.create_heuristica()
-        else:
-            longitud_aux = len(ids_territorios)
-            media_soldados = (self.get_nsoldiers() // longitud_aux)
-            for id_nodo in ids_territorios:
-                nodo = total_map.get(id_nodo)
-                nodo.add_soldiers(media_soldados)
-                self.substractn_soldiers(media_soldados)
-                nodo.create_heuristica()
-
-        """         if menor_umbral:
-            id_nodo, _ = r.choice(menor_umbral)
-            nodo = self.get_nodesHolded().get(id_nodo)
             
+
+    def put_soldiers_in_territory(self, total_map, proporcional = True):                                        
+
+        if proporcional:
+            ids_territorios = list(self.get_nodesHolded().keys())
+            menor_umbral = list(filter(lambda i: total_map.get(i)._heuristica > 0, ids_territorios))
+            longitud = len(menor_umbral)
+            longitud_aux = len(ids_territorios)
+            
+            if longitud != 0:
+                media_soldados = (self.get_nsoldiers() // longitud)
+                for id_nodo in menor_umbral:
+                    nodo = total_map.get(id_nodo)
+                    nodo.add_soldiers(media_soldados)
+                    self.substractn_soldiers(media_soldados)
+                    nodo.create_heuristica()
+            elif longitud_aux != 0:                
+                media_soldados = (self.get_nsoldiers() // longitud_aux)
+                for id_nodo in ids_territorios:
+                    nodo = total_map.get(id_nodo)
+                    nodo.add_soldiers(media_soldados)
+                    self.substractn_soldiers(media_soldados)
+                    nodo.create_heuristica()
+            else:
+                return
         else:
-            id_nodo, _ = max(heuristicas, key = operator.itemgetter(1))
-            nodo = total_map.get(id_nodo)
-        
-        id_nodo, _ = max(heuristicas, key = operator.itemgetter(1)) 
-        nodo = total_map.get(id_nodo)
-        nodo.add_soldiers(1)
-        self.substractn_soldiers(1)
-        nodo.create_heuristica()
-        return nodo """
+            territorios = self.get_nodesHolded().values()
+            for t in territorios:
+                nsoldados = t.get_heuristica() * self.get_nsoldiers()
+                t.add_soldiers(nsoldados)
+                self.substractn_soldiers(nsoldados)
+                t.create_heuristica()
+
+    def put_soldiers_human(self, total_map, id_territorio, nsoldados):
+        if id_territorio not in list(self.get_nodesHolded().keys()):
+            print("Por favor selecciona un territorio que sea tuyo.")
+        elif nsoldados > self.get_nsoldiers():
+            print("No puedes asignar mas soldados de los que tienes")
+        elif nsoldados < 0:
+            print("No puedes asignar un número negativo de soldados")
+        else:
+            terr = total_map.get(id_territorio)
+            terr.add_soldiers(nsoldados)
+            self.substractn_soldiers(nsoldados)
 
 
     def tirar_dado(self, nodoAtaque, nodoDefensa):                                      # Si devuelve True el ataque se ha realizado con exito, y False si ha fallado el ataque
@@ -333,33 +307,48 @@ class Player:
         self.substractn_soldiers(1)
         nodo.set_player(self)
         self.add_nodeHolded(id_nodo , nodo)
-        nodo.create_heuristica()
+
 
     def reordenacion(self, total_map):
         isPath = 0
         ids_territorios = list(self.get_nodesHolded().keys())
-        id_max_heur = max([(i, total_map.get(i)._heuristica) for i in ids_territorios], key = operator.itemgetter(1))[0]                         ####### ENCONTRAR EL NODO CON MAYOR HEURISTICA ########
-        umbral = list(filter(lambda i: total_map.get(i)._heuristica == 0 and total_map.get(i)._soldiers >= 1, ids_territorios))
+        if len(ids_territorios) == 0:
+            return
+        else:
+            id_max_heur = max([(i, total_map.get(i)._heuristica) for i in ids_territorios], key = operator.itemgetter(1))[0]                         ####### ENCONTRAR EL NODO CON MAYOR HEURISTICA ########
+            umbral = list(filter(lambda i: total_map.get(i)._heuristica == 0 and total_map.get(i)._soldiers > 1, ids_territorios))
 
-        if umbral:
-            for id_nodo in umbral:
-                isPath = nx.has_path(self._riskMap, id_nodo, id_max_heur)
-                if not isPath:
-                    continue
-                else:
-                    #print("Se han trasladado " + str(total_map.get(id_nodo).get_soldiers()-1) + " soldados desde el nodo " + str(id_nodo) + " hasta el nodo " + str(id_max_heur))
-                    total_map.get(id_max_heur).add_soldiers(total_map.get(id_nodo).get_soldiers()-1)
-                    total_map.get(id_nodo).set_soldiers(1)
-                    continue
-            
-        #print("Fin de la reordenacion")
+            if umbral:
+                for id_nodo in umbral:
+                    isPath = nx.has_path(self._riskMap, id_nodo, id_max_heur)
+                    if not isPath:
+                        continue
+                    else:
+                        total_map.get(id_max_heur).add_soldiers(total_map.get(id_nodo).get_soldiers()-1)
+                        total_map.get(id_nodo).set_soldiers(1)
+                        continue
+    
+
+    def reordenacion_human(self, total_map, inicial, nsoldados, objetivo):
+
+        if inicial not in list(self.get_nodesHolded().keys()) or objetivo not in list(self.get_nodesHolded().keys()):
+            print("Por favor selecciona territorios que sean tuyos.")
+        elif nsoldados > total_map.get(inicial).get_soldiers():
+            print("El número de soldados seleccionados supera el número de soldados que existen en el territorio inicial.")
+        elif nsoldados < 0:
+            print("No puedes trasladar un número negativo de soldados.")
+        elif not nx.has_path(self._riskMap, inicial, objetivo):
+            print("No hay ningún camino disponible entre los dos nodos, por lo que no se pueden trasladar.")
+        else:
+            total_map.get(objetivo).add_soldiers(nsoldados)
+            total_map.get(inicial).substract_soldiers(nsoldados)
 
 
     def sold_continentes(self):
         ids = list(self.get_nodesHolded().keys())
         cont_completos = 0
         for cont in self._list_cont:
-            if set(cont) <= set(ids):
+            if cont <= set(ids):
                 cont_completos += 1
         #print(cont_completos)
         sold_nuevos = 10 + (5*cont_completos)
@@ -367,10 +356,8 @@ class Player:
 
         self.addn_soldiers(sold_nuevos)
 
-    def actualizar_heur(self, total_map):
+
+    def actualizar_heur(self):
         territorios = list(self._nodesHolded.values())
         for t in territorios:
             t.create_heuristica()
-
-
-        # ESCRIBE EL REPORT PUTO TONTO Y DENTRO DE POCO A SER POSIBLE QUE PARECES SUBNORMAL
