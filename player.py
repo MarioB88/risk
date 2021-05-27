@@ -80,7 +80,7 @@ class Player:
             mcst.tipo_busqueda(limite_tiempo = limite)
         else:
             mcst.tipo_busqueda(max_rollouts= limite)
-        mejor_accion = mcst.mejor_jugada()
+        mejor_accion = mcst.best_move()
         n_ataque, objetivo = mejor_accion
         print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
         if n_ataque != 0:
@@ -97,7 +97,7 @@ class Player:
                 mcst.tipo_busqueda(limite_tiempo = limite)
             else:
                 mcst.tipo_busqueda(max_rollouts= limite)
-            mejor_accion = mcst.mejor_jugada()
+            mejor_accion = mcst.best_move()
             n_ataque, objetivo = mejor_accion
             print("La mejor accion seleccionada ha sido: Atacar desde " + str(n_ataque) + " hacia " + str(objetivo))
             if n_ataque != 0:

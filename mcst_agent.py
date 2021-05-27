@@ -1,12 +1,7 @@
 import random as r
 import time
 import copy
-import sys
-from math import sqrt, log
 from node_tree import Node_Tree
-from operator import itemgetter
-from nodes import Node
-#from player import Player
 
 umbral = 0.20
 
@@ -28,9 +23,6 @@ class McstAgent:
             for o in objetivos:
                 node = Node_Tree((n_ataque._idN, o._idN), parent)
                 parent.children.setdefault((n_ataque._idN,o._idN), node)
-        # for n_ataque, objetivo in list(state.acciones_posibles().items()):
-        #     node = Node_Tree((n_ataque._idN, objetivo._idN), parent)
-        #     parent.children.setdefault((n_ataque._idN,objetivo._idN), node)
         
         node = Node_Tree((0,0), parent)
         parent.children.setdefault((0,0), node)
@@ -46,9 +38,6 @@ class McstAgent:
             children = node.children.values()
             list_children = list(children)
             node = max(list_children, key = lambda x: x.calculo_ucb(simulaciones))
-            # max_ucb = max(list_children, key = lambda x: x.calculo_ucb(simulaciones))
-            # n_maxUcb = [n for n in list_children if n.ucb == max_ucb]
-            # node = r.choice(n_maxUcb)
             while True:
                 try:
                     state.jugada(node.accion)
@@ -56,14 +45,6 @@ class McstAgent:
                 except KeyError:
                     list_children.remove(node)
                     node = max(list_children, key = lambda x: x.calculo_ucb(simulaciones))
-                    # try:
-                    #     n_maxUcb.remove(node)
-                    # except:
-                    #     list_children.remove(node)
-                    # if len(n_maxUcb) == 0:
-                    #     node = r.choice(list_children)
-                    # else:
-                    #     node = r.choice(n_maxUcb)
                     continue
             if node.nvisited == 0:
                 return node, state
@@ -128,35 +109,14 @@ class McstAgent:
 
 
     def roll_out(self, state):
-
-        #acciones = []
         
         while state.winner()[0] == False:
-            #acciones = state.acciones_posibles()
-            # if len(acciones) == 0:
-            #     accion = None
-            #     state.jugada(accion)
-            #     continue
-            # else:
-            #     n_ataque = r.choice(list(acciones.keys()))
-            #     objetivo = r.choice(acciones.get(n_ataque))
-            #     state.jugada((n_ataque._idN, objetivo._idN))
             n_ataque, n_objetivo = state.accion_aleatoria()
-            
-            # acciones=[]
-            # for n_ataque, objetivos in list(state.acciones_posibles().items()):                     # OPTIMIZAR
-            #     for o in objetivos:
-            #         acciones.append((n_ataque._idN, o._idN))
-            # if len(acciones) == 0:
-            #     accion = None
-            # else:
-            #     accion = r.choice(acciones)
-            # state.jugada(accion)
             if n_ataque == 0:
                 state.jugada(None)
             else:
                 state.jugada((n_ataque, n_objetivo))
-            #acciones = []
+                
         return state.winner()
 
     def backup(self, node, winner, n_rollout):
@@ -182,7 +142,7 @@ class McstAgent:
             node.calculo_ucb(n_rollout)
             node = node.parent
 
-    def mejor_jugada(self):                                                                             # Escoge el nodo que mas se ha simulado
+    def best_move(self):                                                                             # Escoge el nodo que mas se ha simulado
         max_nvisited = max(self.root.children.values(), key = lambda n: n.nvisited).nvisited
         max_repetidos = [n for n in self.root.children.values() if n.nvisited == max_nvisited]
         nodo_elegido = r.choice(max_repetidos)

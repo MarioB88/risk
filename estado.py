@@ -8,10 +8,6 @@ class State:
         self.p_other = p_other
         self.turn = 0
 
-    def set_acciones(self, acciones):
-        self.acciones = acciones.copy()
-        return self.acciones
-
     def acciones_posibles(self):
         self.acciones = {}
         player = None
@@ -29,14 +25,14 @@ class State:
         return self.acciones
 
     def accion_aleatoria(self):
-        self.acciones = {}
         player = None
 
         if self.turn == 0:
             player = self.player
         else:
             player = self.p_other
-        territorios = list(player.get_nodesHolded().keys())                                                     ###### HABILITAR ESTA LINEA Y MIRAR SI FUNCIONA BIEN ######
+
+        territorios = list(player.get_nodesHolded().keys())
         posible_ataque = list(filter(lambda x: self.total_map.get(x)._heuristica > 0 and self.total_map.get(x)._soldiers > 1, territorios))
 
         if len(posible_ataque) == 0:
