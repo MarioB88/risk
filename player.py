@@ -3,6 +3,8 @@ import operator
 import networkx as nx
 import copy
 import time
+
+from networkx.algorithms.operators.all import union_all
 from estado import State
 from mcst_agent import McstAgent
 from node_tree import Node_Tree
@@ -134,10 +136,11 @@ class Player:
 
         if target.get_player()._num == 0:
             if attack.get_soldiers()-1 != 0:
-                target.set_soldiers(attack.get_soldiers()-1)
+                nsold = round(attack.get_soldiers()/2)
+                target.set_soldiers(attack.get_soldiers()-nsold)
             else:
                 target.set_soldiers(1)
-            attack.set_soldiers(1)
+            attack.set_soldiers(nsold)
             self.add_nodeHolded(target.get_idN(), target)
             target.set_player(self)
             print("Territorio neutro conquistado")
@@ -145,10 +148,11 @@ class Player:
         elif self.tirar_dado(attack, target):
             if attack.get_soldiers() >= target.get_soldiers():
                 self.add_nodeHolded(target.get_idN(), target)
-                target.set_soldiers(attack.get_soldiers()-1)
+                nsold = round(attack.get_soldiers()/2)
+                target.set_soldiers(attack.get_soldiers()-nsold)
                 if target.get_soldiers() == 0:
                     target.set_soldiers(1)
-                attack.set_soldiers(1)
+                attack.set_soldiers(nsold)
                 target.set_player(self)
                 p_other.del_node(target.get_idN(), total_map)
                 print("Ataque desde nodo: " + str(attack.get_idN()) + " realizado con éxito, tus soldados han vencido a la defensa del nodo: " + str(target.get_idN()) + "\n")
@@ -175,10 +179,11 @@ class Player:
 
         if target.get_player()._num == 0:
             if attack.get_soldiers()-1 != 0:
-                target.set_soldiers(attack.get_soldiers()-1)
+                nsold = round(attack.get_soldiers()/2)
+                target.set_soldiers(attack.get_soldiers()-nsold)
             else:
                 target.set_soldiers(1)
-            attack.set_soldiers(1)
+            attack.set_soldiers(nsold)
             self.add_nodeHolded(target.get_idN(), target)
             target.set_player(self)
             target.create_heuristica()
@@ -186,10 +191,11 @@ class Player:
         elif self.tirar_dado(attack, target):
             if attack.get_soldiers() >= target.get_soldiers():
                 self.add_nodeHolded(target.get_idN(), target)
-                target.set_soldiers(attack.get_soldiers()-1)
+                nsold = round(attack.get_soldiers()/2)
+                target.set_soldiers(attack.get_soldiers()-nsold)
                 if target.get_soldiers() == 0:
                     target.set_soldiers(1)
-                attack.set_soldiers(1)
+                attack.set_soldiers(nsold)
                 target.set_player(self)
                 p_other.del_node(target.get_idN(), total_map)
                 target.create_heuristica()
@@ -234,8 +240,9 @@ class Player:
             territorios = self.get_nodesHolded().values()
             for t in territorios:
                 nsoldados = t.get_heuristica() * self.get_nsoldiers()
-                t.add_soldiers(nsoldados)
-                self.substractn_soldiers(nsoldados)
+                nsoldados = round(nsoldados)
+                t.add_soldiers(int(nsoldados))
+                self.substractn_soldiers(int(nsoldados))
                 t.create_heuristica()
 
     def put_soldiers_human(self, total_map, id_territorio, nsoldados):

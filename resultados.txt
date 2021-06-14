@@ -1,0 +1,7 @@
+----Turnos de 15 segundos----
+
+Jugador uno ha ganado (proporcional): 7
+Jugador dos ha ganado (no proporcional): 4----Turnos----
+
+Jugador uno ha ganado (15 segundos): 7
+Jugador dos ha ganado (30 segundos): 6

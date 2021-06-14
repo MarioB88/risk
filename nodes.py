@@ -75,6 +75,9 @@ class Node:
                 solo_neutros = False
             bst += s_enemigos
         if bst != 0:
+            if nsoldados == 0:
+                self._soldiers = 1
+                nsoldados = 1
             self._bsr = bst/nsoldados
         else:
             if not solo_neutros:

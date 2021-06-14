@@ -43,8 +43,9 @@ class McstAgent:
                     state.jugada(node.accion)
                     break
                 except KeyError:
-                    list_children.remove(node)
-                    node = max(list_children, key = lambda x: x.calculo_ucb(simulaciones))
+                    # list_children.remove(node)
+                    # node = max(list_children, key = lambda x: x.calculo_ucb(simulaciones))
+                    node = r.choice(list_children)
                     continue
             if node.nvisited == 0:
                 return node, state
@@ -57,7 +58,7 @@ class McstAgent:
                     state.jugada(node.accion)
                     break
                 except KeyError:
-                    list_children.remove(node)
+                    # list_children.remove(node)
                     node = r.choice(list_children)
                     continue
         return node, state
@@ -85,7 +86,7 @@ class McstAgent:
         self.tiempo_busqueda = time.perf_counter() - inicio
         self.rollouts = n_rollout
         #print(self.print_tree())
-        print(self.print_primeros_hijos())
+        #print(self.print_primeros_hijos())
         print("\nNumero de rollouts: " + str(self.rollouts))
         print("\nTiempo de busqueda: " + str(self.tiempo_busqueda))
 
@@ -103,7 +104,7 @@ class McstAgent:
         self.tiempo_busqueda = time.perf_counter() - inicio
         self.rollouts = n_rollout
         #print(self.print_tree())
-        print(self.print_primeros_hijos())
+        #print(self.print_primeros_hijos())
         print("\nNumero de rollouts: " + str(self.rollouts))
         print("\nTiempo de busqueda: " + str(self.tiempo_busqueda))
 
@@ -112,10 +113,7 @@ class McstAgent:
         
         while state.winner()[0] == False:
             n_ataque, n_objetivo = state.accion_aleatoria()
-            if n_ataque == 0:
-                state.jugada(None)
-            else:
-                state.jugada((n_ataque, n_objetivo))
+            state.jugada((n_ataque, n_objetivo))
                 
         return state.winner()
 
@@ -124,10 +122,8 @@ class McstAgent:
         puntuacion = 0
         total = 0
 
-        if self.player._num == winner[1]._num:
-            puntuacion = 1
-        else:
-            puntuacion = -1
+        puntuacion = winner[1]
+        
 
         node.nvisited += 1
         node.reward += puntuacion
@@ -135,6 +131,7 @@ class McstAgent:
         node = node.parent
         while node is not None:
             node.nvisited += 1
+            total = 0
             children = list(node.children.values())
             for n in children:
                 total += n.reward
@@ -148,18 +145,18 @@ class McstAgent:
         nodo_elegido = r.choice(max_repetidos)
         return nodo_elegido.accion
 
-    def print_tree(self, tree_nodes = None, cadena = "", nivel = 0):
+    def print_tree(self, tree_nodes = None, cadena = "", nivel = 0, n= 0):
         if tree_nodes is None:
             cadena = str(self.root) + "\n"
             if len(self.root.children) != 0:
-                cadena = self.print_tree(tree_nodes = self.root.children, cadena = cadena, nivel = copy.copy(nivel) + 1)
+                cadena = self.print_tree(tree_nodes = self.root.children, cadena = cadena, nivel = copy.copy(nivel) + 1, n = n)
         else:
             for tn in tree_nodes.values():
                 for _ in range(0,nivel):
                     cadena += "\t"
                 cadena += str(tn) + "\n"
-                if len(tn.children) !=0:
-                    cadena = self.print_tree(tree_nodes = tn.children, cadena = cadena, nivel = copy.copy(nivel) + 1)
+                if len(tn.children) !=0 and n <2:
+                    cadena = self.print_tree(tree_nodes = tn.children, cadena = cadena, nivel = copy.copy(nivel) + 1, n = n+1)
         return cadena
     
     def print_primeros_hijos(self):

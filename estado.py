@@ -60,25 +60,24 @@ class State:
         if accion is not None:
             id_n_ataque, id_objetivo = accion
             player.tira_dados(self.total_map.get(id_n_ataque), self.total_map.get(id_objetivo), p_other, self.total_map)
+            if id_n_ataque == 0:
+                if self.turn == 0:
+                    self.turn = 1
+                else:
+                    self.turn = 0
+                player.reordenacion(self.total_map)
+                player.sold_continentes()                                       
+                player.put_soldiers_in_territory(self.total_map)
 
-        player.reordenacion(self.total_map)
-        player.sold_continentes()                                       
-        player.put_soldiers_in_territory(self.total_map)
-
-        if self.turn == 0:
-            self.turn = 1
-        else:
-            self.turn = 0
 
     def winner(self):
 
         if len(self.player.get_nodesHolded().keys()) == 0:
-            winner = (True, self.p_other)
+            winner = (True, -1)
         elif len(self.p_other.get_nodesHolded().keys()) == 0:
-            winner = (True, self.player)
+            winner = (True, 1)
         else:
             winner = (False, None)
-
         return winner
         
 

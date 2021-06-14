@@ -1,0 +1,4 @@
+----Turnos----
+
+Jugador uno ha ganado (30): 6
+Jugador dos ha ganado (45): 5

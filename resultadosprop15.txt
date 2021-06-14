@@ -1,0 +1,4 @@
+AABBAABAAAA----Turnos----
+
+Jugador uno ha ganado (prop): 8
+Jugador dos ha ganado (no prop): 3

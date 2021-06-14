@@ -1,0 +1,4 @@
+AAAABAAAAAA----Turnos 30----
+
+Jugador uno ha ganado (prop): 10
+Jugador dos ha ganado (no prop): 1AA

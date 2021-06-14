@@ -1,0 +1,7 @@
+----Turnos----
+
+Jugador uno ha ganado (15): 5
+Jugador dos ha ganado (30): 6AABABBBABBB----Turnos----
+
+Jugador uno ha ganado (15): 4
+Jugador dos ha ganado (30): 7

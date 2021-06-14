@@ -296,15 +296,19 @@ if __name__ == '__main__':
     global total_map
     global riskMap
 
+    n = 0
+    errores = 0
+    vict_player1 = 0
+    vict_player2 = 0
     player1, player2 = initialize()
 
     binary = True      # Esta variable llevará de qué jugador es el turno, si es 0 sera del primero y si es uno del segundo.
     print("Escriba 1 si quieres establecer un limite de tiempo o 2 si quieres establecer un limite de simulaciones.")
     tipo = input()
     if tipo == "1":
-        print("Escriba los segundos maximos de busqueda. Como orientacion en 30 segundos se realizan 3000~4000 simulaciones.")
+        print("Escriba los segundos maximos de busqueda. Como orientacion en 30 segundos se realizan ~5000 simulaciones.")
     elif tipo == "2":
-        print("Escriba las simulaciones maximas de busqueda. Como orientacion en 30 segundos se realizan 3000~4000 simulaciones.")
+        print("Escriba las simulaciones maximas de busqueda. Como orientacion en 30 segundos se realizan ~5000 simulaciones.")
     else:
         print("Por favor escriba un 1 o un 2")
     
@@ -317,7 +321,7 @@ if __name__ == '__main__':
         except:
             print("Por favor escriba un numero entero.")
             limite = input()
-
+        
     while (len(player1.get_nodesHolded()) != 0)  and (len(player2.get_nodesHolded()) != 0):
         num_cont = 0
         sold_nuevos = 0
@@ -327,11 +331,13 @@ if __name__ == '__main__':
             draw_graph_human_attack(player1, player2, total_map)
             draw_graph_human_reordenacion(player1, player2, total_map)
             binary = False
+
         else:
             player2.sold_continentes()
             player2.put_soldiers_in_territory(total_map)
             player2.attack_IA(player1, total_map, tipo, limite)
             player2.reordenacion(total_map)
             binary = True
-        
+    
         draw_graph_IA(player1, player2, total_map)
+        
