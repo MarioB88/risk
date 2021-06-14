@@ -316,7 +316,7 @@ if __name__ == '__main__':
     while True:
         try:
             limite = int(limite)
-            print("Empieza la partida")
+            print("Empieza la partida. Eres el jugador de color Rojo. ¡Suerte!")
             break
         except:
             print("Por favor escriba un numero entero.")
